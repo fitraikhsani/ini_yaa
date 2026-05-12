@@ -2,61 +2,56 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ISAN FLOATING COUNTER</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISAN FARMER v21.0</title>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: #0d1117; font-family: sans-serif; }
+        :root { --neon: #00f2ff; --dark: #0d1117; }
+        body, html { margin: 0; padding: 0; height: 100%; background: var(--dark); overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
-        /* TOMBOL BULAT MELAYANG */
-        #floating-bot {
-            position: fixed; top: 100px; left: 20px;
-            width: 75px; height: 75px;
-            background: rgba(0, 242, 255, 0.9); border-radius: 50%;
-            z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            box-shadow: 0 0 20px rgba(0,242,255,0.6);
-            cursor: move; touch-action: none;
-            border: 2px solid #fff;
-            backdrop-filter: blur(5px);
+        /* Dashboard Atas yang Sangat Tipis */
+        #dashboard {
+            position: fixed; top: 0; left: 0; width: 100%; height: 70px;
+            background: rgba(22, 27, 34, 0.95); border-bottom: 2px solid var(--neon);
+            z-index: 999999; display: flex; align-items: center; justify-content: space-between;
+            padding: 0 15px; box-sizing: border-box; backdrop-filter: blur(10px);
         }
 
-        /* TAMPILAN ANGKA DI DALAM BULATAN */
-        #counter-text { font-size: 16px; font-weight: bold; color: #000; margin: 0; }
-        #status-text { font-size: 9px; font-weight: bold; color: #000; text-transform: uppercase; margin-top: -2px; }
-
-        /* JENDELA KONTEN */
-        #main-view { width: 100%; height: 100%; border: none; background: #fff; }
-
-        /* PROGRESS RING (Garis Melingkar) */
-        .ring {
-            position: absolute; width: 100%; height: 100%;
-            border-radius: 50%; border: 4px solid rgba(255,255,255,0.3);
-            box-sizing: border-box;
+        .info { color: #fff; font-size: 14px; font-weight: bold; }
+        .info span { color: var(--neon); font-size: 20px; }
+        
+        #btn-start {
+            background: var(--neon); color: #000; border: none; padding: 8px 15px;
+            border-radius: 5px; font-weight: bold; cursor: pointer;
         }
+
+        /* Iframe untuk muat konten */
+        #browser-frame {
+            position: absolute; top: 70px; left: 0; width: 100%;
+            height: calc(100% - 70px); border: none; background: #fff;
+        }
+
+        /* Progress Bar */
+        #progress-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: #333; }
+        #progress-bar { width: 0%; height: 100%; background: var(--neon); transition: 0.5s; }
     </style>
 </head>
 <body>
 
-<div id="floating-bot">
-    <div class="ring"></div>
-    <div id="counter-text">0/30</div>
-    <div id="status-text">WAITING</div>
+<div id="dashboard">
+    <div class="info">PROGRESS: <span id="count">0</span> / 30</div>
+    <button id="btn-start" onclick="startFarming()">MULAI FARMING</button>
 </div>
 
-<iframe id="main-view" name="view" sandbox="allow-scripts allow-same-origin allow-forms" src="https://www.bing.com"></iframe>
+<iframe id="browser-frame" name="farm_frame" sandbox="allow-scripts allow-same-origin allow-forms" src="about:blank"></iframe>
+<div id="progress-container"><div id="progress-bar"></div></div>
 
 <script>
-    const BOT = document.getElementById('floating-bot');
-    const FRAME = document.getElementById('main-view');
-    const COUNT_EL = document.getElementById('counter-text');
-    const STATUS_EL = document.getElementById('status-text');
-    
-    const SEARCH = [
-        "Berita Medan Tembung hari ini", "Harga emas Antam Medan", "Metode AHP Sistem Informasi", 
-        "Wisata Sumatera Utara 2026", "Jurnal SPK SAW Terbaru", "Loker IT Medan", 
-        "Peta GIS Medan Tembung", "Update Teknologi AI", "Kuliner Tembung Enak", "Visual Studio Code Tutorial"
-    ];
-
-    const MSN = [
+    const TASKS = [
+        "https://www.bing.com/search?q=weather+in+Medan", "https://www.bing.com/search?q=latest+technology+news+2026",
+        "https://www.bing.com/search?q=how+to+learn+python", "https://www.bing.com/search?q=microsoft+rewards+tips",
+        "https://www.bing.com/search?q=AHP+method+calculation", "https://www.bing.com/search?q=GIS+mapping+tutorial",
+        "https://www.bing.com/search?q=best+food+in+Medan+Tembung", "https://www.bing.com/search?q=stock+market+today",
+        "https://www.bing.com/search?q=visual+studio+code+extensions", "https://www.bing.com/search?q=artificial+intelligence+trends",
         "https://www.msn.com/id-id/berita/other/ar-AA22WWCR", "https://www.msn.com/id-id/hiburan/berita/ar-AA22Y4xE",
         "https://www.msn.com/id-id/berita/other/ar-AA22S081", "https://www.msn.com/id-id/ekonomi/bisnis/ar-AA22Y8H8",
         "https://www.msn.com/id-id/ekonomi/ekonomi/ar-AA22XAhc", "https://www.msn.com/id-id/berita/other/ar-AA22Upk5",
@@ -69,58 +64,47 @@
         "https://www.msn.com/id-id/berita/nasional/ar-AA22U9z1", "https://www.msn.com/id-id/berita/other/ar-AA22W8L9"
     ];
 
-    let step = 0;
-    let running = false;
-    let xOffset = 0, yOffset = 0;
-    let active = false;
+    let currentStep = parseInt(sessionStorage.getItem('farm_step')) || 0;
+    let isRunning = false;
 
-    // DRAG LOGIC
-    BOT.addEventListener("touchstart", (e) => {
-        initialX = e.touches[0].clientX - xOffset;
-        initialY = e.touches[0].clientY - yOffset;
-        active = true;
-    }, false);
+    function startFarming() {
+        isRunning = true;
+        document.getElementById('btn-start').innerText = "STOP";
+        document.getElementById('btn-start').onclick = stopFarming;
+        next();
+    }
 
-    BOT.addEventListener("touchend", () => { active = false; }, false);
+    function stopFarming() {
+        isRunning = false;
+        document.getElementById('btn-start').innerText = "MULAI FARMING";
+        document.getElementById('btn-start').onclick = startFarming;
+        location.reload();
+    }
 
-    BOT.addEventListener("touchmove", (e) => {
-        if (active) {
-            e.preventDefault();
-            let currentX = e.touches[0].clientX - initialX;
-            let currentY = e.touches[0].clientY - initialY;
-            xOffset = currentX; yOffset = currentY;
-            BOT.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
-        }
-    }, false);
-
-    // START LOGIC
-    BOT.onclick = () => {
-        if (!running) {
-            running = true;
-            STATUS_EL.innerText = "RUNNING";
-            nextTask();
-        }
-    };
-
-    function nextTask() {
-        if (step >= 30) {
-            COUNT_EL.innerText = "30/30";
-            STATUS_EL.innerText = "DONE";
-            alert("Misi Selesai, San! Semua poin harusnya sudah masuk.");
+    function next() {
+        if (!isRunning) return;
+        if (currentStep >= TASKS.length) {
+            alert("Selesai, San! 30 Poin aman.");
+            sessionStorage.removeItem('farm_step');
             return;
         }
 
-        COUNT_EL.innerText = `${step}/30`;
+        document.getElementById('count').innerText = currentStep + 1;
+        document.getElementById('progress-bar').style.width = ((currentStep + 1) / TASKS.length * 100) + "%";
         
-        let target = (step < 10) ? 
-            `https://www.bing.com/search?q=${encodeURIComponent(SEARCH[step])}` : 
-            MSN[step - 10];
+        // Load URL ke Iframe
+        document.getElementById('browser-frame').src = TASKS[currentStep];
+        
+        currentStep++;
+        sessionStorage.setItem('farm_step', currentStep);
 
-        FRAME.src = target;
-        step++;
-        
-        // 5 Detik per Tugas
-        setTimeout(nextTask, 5000);
+        // Jeda 6 detik (sesuai standar bot di GitHub itu agar tidak terdeteksi)
+        setTimeout(next, 6000);
+    }
+
+    // Auto-resume jika halaman ter-refresh
+    window.onload = () => {
+        if (currentStep > 0) startFarming();
     }
 </script>
 </body>
